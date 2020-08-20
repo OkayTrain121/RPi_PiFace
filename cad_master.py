@@ -7,8 +7,14 @@
 #	... Possibly more information ...
 #
 # Switch Inputs:
-#	S0 - Reboot RPi
-#	S1 - Clean Restart PlexMediaServer
+#	S0 - <Not Configurable>
+#	S1 - Reboot RPi
+#	S2 - Clean Restart PlexMediaServer
+#	S3 - Display IP Addresses
+#	S4 - Display Memory Stats
+#	S5 - <Exit PiFace>
+#	S6 - <No Action>
+#	S7 - <No Action>
 
 __author__ = "JP"
 
@@ -21,6 +27,15 @@ import sys
 import os
 
 
+LOG_ENABLED = True
+
+
+# Function to log flow
+def logger(str):
+	if LOG_ENABLED is True:
+		print(str)
+
+
 # Function to execute shell commands
 def execute_shell_cmd(cmd):
 	process = subprocess.Popen(cmd,
@@ -29,17 +44,18 @@ def execute_shell_cmd(cmd):
 	while True:
 		return_code = process.poll()
 		if return_code is not None:
-			# print("RETURN CODE", return_code)
+			logger("RETURN CODE : " + str(return_code))
 			return process
 
 
 # Plex CAD class
 class PlexCAD(object):
-	def __init__(self, cad, refresh_interval=60):
-		# Initializing private members
+	def __init__(self, cad, refresh_interval=60, listener=None):
+		# Initializing private members				# Default = 1min
 		self.refresh_interval = refresh_interval
 		self.timer = threading.Timer(self.refresh_interval, self.update_display)
 		self.cad = cad
+		self.listener = listener				# SwitchListener obj
 		self.status_down_detected = False
 		self.latest_uptime = " "				# "Uptime- xh:ym"
 
@@ -62,6 +78,11 @@ class PlexCAD(object):
 		return self.cad
 
 
+	# Get listener object
+	def get_listener(self):
+		return self.listener
+
+
 	# Get latest uptime
 	def get_latest_uptime(self):
 		return self.latest_uptime
@@ -79,7 +100,6 @@ class PlexCAD(object):
 		if self.get_status_down_detected() is False:
 			cmd, buffer = ["pidof", "Plex Media Server"], []
 			process = execute_shell_cmd(cmd)
-
 			for output in process.stdout.readlines():
 				buffer.append(output.strip())
 
@@ -96,7 +116,6 @@ class PlexCAD(object):
 	def get_uptime(self):
 		cmd, buffer = ["uptime", "-p"], []
 		process = execute_shell_cmd(cmd)
-
 		for output in process.stdout.readlines():
 			buffer.append(output.strip())
 
@@ -104,6 +123,7 @@ class PlexCAD(object):
 
 		tmp1 = tmp.replace("up", "Uptime-")
 
+		tmp2 = tmp1
 		if "hours" in tmp1:
 			tmp2 = tmp1.replace(" hours", "h")
 		elif "hour" in tmp1:
@@ -113,6 +133,7 @@ class PlexCAD(object):
 
 		tmp3 = tmp2.replace(", ", ":")
 
+		uptime = tmp3
 		if "minutes" in tmp3:
 			uptime = tmp3.replace(" minutes", "m")
 		elif "minute" in tmp3:
@@ -126,6 +147,11 @@ class PlexCAD(object):
 		self.uptime = uptime
 
 
+	# Set listener object
+	def set_listener(self, listener):
+		self.listener = listener
+
+
 	# Set status down detected
 	def set_status_down_detected(self, is_detected):
 		self.status_down_detected = is_detected
@@ -133,19 +159,18 @@ class PlexCAD(object):
 
 	# Function to update display
 	def update_display(self):
-		# Clear LCD
-		cad.lcd.clear()
+		self.get_cad().lcd.clear()
 
 		# Display status of PlexMediaServer
 		status = self.get_PlexMediaServer_status()
-		cad.lcd.write(status)
+		self.get_cad().lcd.write(status)
 
 		# Adjust cursor at 1st column (0), 2nd row (1)
-		cad.lcd.set_cursor(0, 1)
+		self.get_cad().lcd.set_cursor(0, 1)
 
 		# Display RPi Uptime
 		uptime = self.get_uptime()
-		cad.lcd.write(uptime)
+		self.get_cad().lcd.write(uptime)
 		self.set_uptime(uptime)
 
 		# Restart timer
@@ -154,6 +179,7 @@ class PlexCAD(object):
 
 	# Function to restart timer
 	def restart_timer(self):
+		self.timer.cancel()
 		self.timer = threading.Timer(self.refresh_interval, self.update_display)
 		self.timer.start()
 
@@ -161,41 +187,120 @@ class PlexCAD(object):
 	# Function to reboot RPi
 	def reboot_RPi(self):
 		# TODO: Add this file to startup
+		self.get_cad().lcd.clear()
+		self.get_cad().lcd.write("Rebooting\n..please wait..")
+		self.get_listener().deactivate()
+		self.fini()
 		os.system('sudo reboot')
 
 
 	# Function to clean restart PlexMediaServer
 	def clean_restart_PlexMediaServer(self):
-		cmd = ["Execute the manual restart file"]
+		self.get_cad().lcd.clear()
+		self.get_cad().lcd.write("Restarting\nPlexMediaServer")
+
+		# Kill any running scripts
+		raw = "sudo pkill -f -9 'manualRestartAllNoWatch'"  # Not working quite well
+		cmd = []
+		for token in raw.split():
+			cmd.append(token)
+			logger(token)
 		process = execute_shell_cmd(cmd)
+
+		# Rerun script
+		raw = "/bin/bash /home/pi/Desktop/PlexAutomation/manualRestartAllNoWatch.sh"
+		cmd = []
+		for token in raw.split():
+			cmd.append(token)
+			logger(token)
+		process = execute_shell_cmd(cmd)
+
+
+	# Function to display IPv4 Addresses
+	def display_ipv4_addresses(self):
+		self.get_cad().lcd.clear()
+		self.get_cad().lcd.write("Fetching\nIP Address")
+		time.sleep(1)
+
+		# Fetch private IPv4 Address
+		raw = "hostname --all-ip-addresses"
+		cmd, buffer = [], []
+		for token in raw.split(" "):
+			cmd.append(token)
+			logger(token)
+		process = execute_shell_cmd(cmd)
+		for output in process.stdout.readlines():
+			buffer.append(output.strip())
+
+		all_ips = buffer[0].split()
+		ipv4_private = all_ips[0]
+		logger("IPv4 Private : " + str(ipv4_private))
+
+		# Fetch public IPv4 Address
+		raw = "dig +short myip.opendns.com @resolver1.opendns.com"
+		cmd, buffer = [], []
+		for token in raw.split(" "):
+			cmd.append(token)
+			logger(token)
+		process = execute_shell_cmd(cmd)
+		for output in process.stdout.readlines():
+			buffer.append(output.strip())
+
+		ipv4_public = buffer[0]
+		logger("IPv4 Public : " + str(ipv4_public))
+
+		self.get_cad().lcd.clear()
+		self.get_cad().lcd.write(ipv4_public)
+		self.get_cad().lcd.set_cursor(0, 1)
+		self.get_cad().lcd.write(ipv4_private)
+
+
+	# Function to display memory stats
+	def display_memory_stats(self):
+		self.get_cad().lcd.clear()
+		self.get_cad().lcd.write("Fetching\nMemory Stats")
+		time.sleep(1)
+
+		cmd, buffer = ["free", "-m"], []
+		process = execute_shell_cmd(cmd)
+		for output in process.stdout.readlines():
+			buffer.append(output.strip())
+
+		memory = buffer[1].split()
+		memory_used = memory[2]
+		memory_available = memory[3]
+		logger("Used : " + str(memory_used))
+		logger("Available : " + str(memory_available))
+
+		self.get_cad().lcd.clear()
+		self.get_cad().lcd.write("Used  : " + str(memory_used) + " MB")
+		self.get_cad().lcd.set_cursor(0, 1)
+		self.get_cad().lcd.write("Avail : " + str(memory_available) + " MB")
 
 
 	# Function to process switch inputs
 	def process_switch_input(self, event):
-		print("yay")
 		switch = event.pin_num
-		cad = event.chip
-		print("Pressed Switch: %d", switch)
+		logger("Pressed Switch : " + str(switch))
 
 		if switch == 0:
-			cad.lcd.write("Reboot RPi")
-	#		reboot_RPi()
+			pass
 		elif switch == 1:
-			cad.lcd.write("Restart Server")
-#			clean_restart_PlexMediaServer()
+			self.reboot_RPi()
 		elif switch == 2:
-			pass
+			self.clean_restart_PlexMediaServer()
 		elif switch == 3:
-			pass
+			self.display_ipv4_addresses()
 		elif switch == 4:
-			cad.lcd.write("Exit PiFace")
-		elif switch == 5:
-			pass
+			self.display_memory_stats()
+#		elif switch == 5:
+#			pass
 		elif switch == 6:
+			pass
+		elif switch == 7:
 			pass
 		else:
 			pass
-		time.sleep(1)
 
 
 if __name__ == "__main__":
@@ -217,35 +322,27 @@ if __name__ == "__main__":
 		cad = pifacecad.PiFaceCAD()
 
 		# Create an instance of the Plex CAD class
-		plexCad = PlexCAD(cad, 60)		# Refresh interval = 60sec
+		plexCad = PlexCAD(cad, 30)		# Refresh interval = 30sec
 
 		# Create a listener (registered callback) for inputs from ALL switches
 		switch_listener = pifacecad.SwitchEventListener(chip=plexCad.get_cad())
 
-		application_switches = [0, 1, 2, 3, 5, 6, 7]
+		application_switches = [0, 1, 2, 3, 4, 6, 7]
 		for switch in application_switches:
 			switch_listener.register(switch, pifacecad.IODIR_ON, plexCad.process_switch_input)
-		switch_listener.register(4, pifacecad.IODIR_ON, barrier.wait)
+		switch_listener.register(5, pifacecad.IODIR_ON, barrier.wait)
 
 		switch_listener.activate()
-
-		# Debug
-#		print("GPIO interrupts : ", str(cad.gpintena.value)) #255 == enabled
-#		print("Switchport : ", cad.switch_port.value)
-#		for i in range(8):
-#			print("Switch ", i, ": ", cad.switches[i].value)
-
-# TRY TO USE PORT EVENT LISTENER DIRECTLY...
-
 		barrier.wait()				# Wait until exit
 
 		# Exit sequence
-		print("Exit sequence")
+		plexCad.get_cad().lcd.write("Exit\nSequence")
 		plexCad.fini()
 		switch_listener.deactivate()
+		sys.exit(0)
 
 	except KeyboardInterrupt:
-		print("Cleanup sequence")
+		plexCad.get_cad().lcd.write("Cleanup\nSequence")
 		plexCad.fini()
 		switch_listener.deactivate()
 		sys.exit(0)
