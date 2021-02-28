@@ -17,3 +17,4 @@ In order to make mypiface.service enabled automatically on boot:
   sudo systemctl status mypiface.service  
   sudo systemctl enable mypiface.service  
   sudo systemctl start mypiface.service
+4. Ofcourse, pifacecad must be installed as explained in https://github.com/piface/pifacecad
