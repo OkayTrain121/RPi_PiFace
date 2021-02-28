@@ -1,0 +1,10 @@
+# This is the crontab file for root viz accessed by "sudo crontab -e"  
+# This file is "root@raspberrypi:/var/spool/cron/crontabs/root", where 'root'  
+# is the name of the file
+# The original contents of the file is below
+
+0 1 * * * sudo /sbin/reboot
+3 1 * * * /bin/bash /home/pi/Desktop/PlexAutomation/manualRestartAll.sh
+0 13 * * * sudo /sbin/reboot
+3 13 * * * /bin/bash /home/pi/Desktop/PlexAutomation/manualRestartAll.sh
+
