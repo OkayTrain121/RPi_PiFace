@@ -3,8 +3,13 @@
 # is the name of the file
 # The original contents of the file is below
 
-0 1 * * * sudo /sbin/reboot
-3 1 * * * /bin/bash /home/pi/Desktop/PlexAutomation/manualRestartAll.sh
-0 13 * * * sudo /sbin/reboot
+# Restart the Plex library everyday
+0 13 * * * sudo service plexmediaserver stop
+1 13 * * * sudo /sbin/reboot
 3 13 * * * /bin/bash /home/pi/Desktop/PlexAutomation/manualRestartAll.sh
+
+# Clear the Plex cache every week, as default Scheduled Tasks is not
+# clearing all cache files older than a week
+15 13 * * * sudo find /var/lib/plexmediaserver/Library/Application\ Support/Plex\ Media\ Server/Cache/PhotoTranscoder/* -mtime +6 -type f -delete
+17 13 * * * sudo find /var/lib/plexmediaserver/Library/Application\ Support/Plex\ Media\ Server/Cache/Transcode/* -mtime +6 -type f -delete
 
