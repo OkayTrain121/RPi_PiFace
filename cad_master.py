@@ -56,7 +56,6 @@ class PlexCAD(object):
 		self.timer = threading.Timer(self.refresh_interval, self.update_display)
 		self.cad = cad
 		self.listener = listener				# SwitchListener obj
-		self.status_down_detected = False
 		self.latest_uptime = " "				# "Uptime- xh:ym"
 
 		# Constructor methods
@@ -88,26 +87,17 @@ class PlexCAD(object):
 		return self.latest_uptime
 
 
-	# Get status down detected
-	def get_status_down_detected(self):
-		return self.status_down_detected
-
-
 	# Get status of the PlexMediaServer
 	def get_PlexMediaServer_status(self):
-		status = "Down!"
+		cmd, buffer = ["pidof", "Plex Media Server"], []
+		process = execute_shell_cmd(cmd)
+		for output in process.stdout.readlines():
+			buffer.append(output.strip())
 
-		if self.get_status_down_detected() is False:
-			cmd, buffer = ["pidof", "Plex Media Server"], []
-			process = execute_shell_cmd(cmd)
-			for output in process.stdout.readlines():
-				buffer.append(output.strip())
-
-			if len(buffer) != 0:
-				status = "Active"
-			else:
-				status = "Down!"
-				self.status_down_detected = True
+		if len(buffer) != 0:
+			status = "Active"
+		else:
+			status = "Down!"
 
 		return "Status- " + status
 
@@ -296,11 +286,17 @@ class PlexCAD(object):
 #		elif switch == 5:
 #			pass
 		elif switch == 6:
-			pass
+			self.get_cad().lcd.clear()
+			self.get_cad().lcd.write("Switch\nUnsupported")
+			time.sleep(1)
 		elif switch == 7:
-			pass
+			self.get_cad().lcd.clear()
+			self.get_cad().lcd.write("Switch\nUnsupported")
+			time.sleep(1)
 		else:
-			pass
+			self.get_cad().lcd.clear()
+			self.get_cad().lcd.write("Switch\nUnsupported")
+			time.sleep(1)
 
 
 if __name__ == "__main__":
@@ -337,12 +333,15 @@ if __name__ == "__main__":
 
 		# Exit sequence
 		plexCad.get_cad().lcd.write("Exit\nSequence")
+		time.sleep(1)
 		plexCad.fini()
 		switch_listener.deactivate()
 		sys.exit(0)
 
 	except KeyboardInterrupt:
 		plexCad.get_cad().lcd.write("Cleanup\nSequence")
+		time.sleep(1)
 		plexCad.fini()
 		switch_listener.deactivate()
 		sys.exit(0)
+
