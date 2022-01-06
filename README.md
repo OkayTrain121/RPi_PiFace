@@ -20,3 +20,11 @@ In order to make mypiface.service enabled automatically on boot:
 4. Ofcourse, pifacecad must be installed as explained in https://github.com/piface/pifacecad
 5. The files that need to be altered post installation in Step 4 are placed in their respective  
   folders in this repo.
+  
+# Other items
+This repo also contains other items, such as PlexMediaAutomation
+In order to install Plex:
+1. Follow https://pimylifeup.com/raspberry-pi-plex-server/
+2. Update transcoder directory in the GUI to a folder in the hdd.
+3. Use crontab scripts to automate timed restarts. Just copy crontab from repo.
+4. Create symlink for media files in /home/pi/
