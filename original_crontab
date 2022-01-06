@@ -13,3 +13,5 @@
 15 13 * * * sudo find /var/lib/plexmediaserver/Library/Application\ Support/Plex\ Media\ Server/Cache/PhotoTranscoder/* -mtime +6 -type f -delete
 17 13 * * * sudo find /var/lib/plexmediaserver/Library/Application\ Support/Plex\ Media\ Server/Cache/Transcode/* -mtime +6 -type f -delete
 
+# Sync HDDs for redundancy
+0 5 * * * sudo /bin/rsync -av --size-only /media/pi/Media/ /media/pi/Media_Backup
