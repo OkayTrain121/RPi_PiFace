@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# This is probably not working as the path to the media has been changed
 inotifywait -r -m /mnt/plexmedia/ -e create -e moved_to | 
 	while read path file action; 
 	do

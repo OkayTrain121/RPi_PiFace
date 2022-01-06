@@ -1,10 +1,13 @@
 #!/bin/bash
 
-sudo umount /media/pi/PlexMediaFiles;
-sudo umount /media/pi/PlexMediaFiles_Backup;
+# The new RaspberryPi OS seems to perform automount at /media/pi
+#sudo umount /media/pi/Media;
+#sudo umount /media/pi/Media_Backup;
+#sleep 10;
+#sudo mount /dev/sda1 /media/pi/Media;
+#sudo mount /dev/sdb1 /media/pi/Media_Backup;
+
 sleep 10;
-sudo mount /dev/sda1 /media/pi/PlexMediaFiles;
-sudo mount /dev/sdb1 /media/pi/PlexMediaFiles_Backup;
 sudo service plexmediaserver restart;
 
 export LD_LIBRARY_PATH="/usr/lib/plexmediaserver/lib";
