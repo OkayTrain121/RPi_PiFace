@@ -243,7 +243,7 @@ class HD44780LCD(object):
         self.send_command(LCD_CLEARDISPLAY)  # command to clear display
         # clearing the display takes a long time
         time.sleep(CLEAR_DISPLAY_DELAY)
-	time.sleep(26/1000000); 		#  additional delay to bridge execution time of LCD_CLEARDISPLAY
+        time.sleep(26/1000000); 		#  additional delay to bridge execution time of LCD_CLEARDISPLAY
         self._cursor_position = [0, 0]
         self._viewport_corner = 0
 
