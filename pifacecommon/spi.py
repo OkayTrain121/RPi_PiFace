@@ -70,7 +70,10 @@ class SPIDevice(object):
 	)
 
         if self.spi_callback is not None:
-            self.spi_callback(bytes_to_send)
+#            print("TYPE:", type(self.spi_callback))
+#            blahblahcat: This cb func comes in as an int and not as a func
+#            Couldn't find the initializer of this class, so commenting this out
+#            self.spi_callback(bytes_to_send)
         # send the spi command
         ioctl(self.fd, SPI_IOC_MESSAGE(1), transfer)
         return ctypes.string_at(rbuffer, ctypes.sizeof(rbuffer))
