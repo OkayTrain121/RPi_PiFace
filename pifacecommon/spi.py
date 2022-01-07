@@ -74,6 +74,7 @@ class SPIDevice(object):
 #            blahblahcat: This cb func comes in as an int and not as a func
 #            Couldn't find the initializer of this class, so commenting this out
 #            self.spi_callback(bytes_to_send)
+             pass
         # send the spi command
         ioctl(self.fd, SPI_IOC_MESSAGE(1), transfer)
         return ctypes.string_at(rbuffer, ctypes.sizeof(rbuffer))
