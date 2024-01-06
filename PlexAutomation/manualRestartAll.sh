@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# The new RaspberryPi OS seems to perform automount at /media/pi
-#sudo umount /media/pi/Media;
-#sudo umount /media/pi/Media_Backup;
-#sleep 10;
-#sudo mount /dev/sda1 /media/pi/Media;
-#sudo mount /dev/sdb1 /media/pi/Media_Backup;
+# NOTE: In RPi3, the OS seemed to perform automount at /media/pi
+sudo umount /media/pi/Media;
+sudo umount /media/pi/Media_Backup;
+sleep 10;
+sudo mount /dev/sda1 /media/pi/Media;
+sudo mount /dev/sdb1 /media/pi/Media_Backup;
 
 sleep 10;
 sudo service plexmediaserver restart;
